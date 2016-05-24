@@ -1,3 +1,10 @@
+<!--
+Creator: <Name>
+Market: SF
+-->
+
+![](https://ga-dash.s3.amazonaws.com/production/assets/logo-9f88ae6c9c3871690e33280fcf557f33.png)
+
 #Intro Mongoose
 
 ## Learning Objectives
@@ -12,13 +19,13 @@ By the end of this lesson you should be able to...
 
 ## Why
 
-Mongoose is an ODM, an **Object Document Mapper**. You can think of an ODM like an ORM for Documents, so in many ways Mongoose is to Mongo what ActiveRecord is to Postgres.
+Mongoose is an ODM, an **Object Document Mapper**. It *maps* documents in a database to JavaScript Objects, making modifying the database possible with easy to use JavaScript helper methods.
 
 >"Let's face it, writing MongoDB validation, casting and business logic boilerplate is a drag. That's why we wrote Mongoose."
 
 >—Creators of Mongoose.
 
-##Terminology
+## Terminology
 - **Schema**: Similar to an object constructor, a Schema is a diagram or blueprint for what every object in the noSQL database will contain.  Here's an example of a simple Address Book noSQL database schema:  
 
 ```javascript
@@ -55,7 +62,7 @@ npm init
 npm install --save mongoose
 ```
 
-We need to make sure MongoDB is running.  From the console, enter this command: 
+We need to make sure MongoDB is running.  From the console, enter this command:
 
 ```
 mongod
@@ -111,7 +118,7 @@ Once you're done building you can save the book.
 ```javascript
 book.save()
 ```
->Note: you can pass save a function that will be called (aka a callback) once the `book` is done being saved. 
+>Note: you can pass save a function that will be called (aka a callback) once the `book` is done being saved.
 
 If you want to build & save in one step you can use `.create`. Also we'll pass it a callback to execute once it's done creating the book.
 
@@ -158,7 +165,7 @@ Book.remove({ title: "The Giver" }, function(err, book) {
   console.log("removal of " + book.title + " successful.");
 });
 ```
-Other removal methods include: 
+Other removal methods include:
 
 ```js
 findByIdAndRemove();
@@ -166,7 +173,7 @@ findOneAndRemove();
 ```
 
 
-## Integrating Mongoose into Express (We do)
+## Integrating Mongoose into Express
 
 Ok well thats nice. But let's see how mongoose plays with express by building a reminders app. called [reminders](https://github.com/ga-dc/reminders_mongo)
 
@@ -176,16 +183,15 @@ Lets create a brand new express application and grab up all the dependencies we'
 $ mkdir reminders
 $ cd reminders
 $ npm init
-$ npm install --save express hbs body-parser method-override mongoose
+$ npm install --save express ejs body-parser mongoose
 $ touch index.js
 ```
 
 The 5 dependencies we'll be using for this app are:
 
   1. `express` - web Frameworks
-  1. `hbs` - view engine
+  1. `ejs` - view engine
   1. `body-parser` - allows us to get parameter values from forms
-  1. `method-override` - allows us to do put/delete requests in our hbs views
   1. `mongoose` - our Mongo ODM
 
 Let's first start by defining our schema, models and creating some seed data.
@@ -201,9 +207,7 @@ $ touch db/schema.js
 $ touch db/seeds.js
 ```
 
-Just like in `active-record` we will define the structure of our database using schemas
-
-Instead of defining tables we'll be defining documents.
+We will define the structure of our database using schemas
 
 In `models/reminder.js`:
 
@@ -274,15 +278,13 @@ var express = require('express');
 var app = express();
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
 
 // Configuration
 mongoose.connect('mongodb://localhost/reminders');
 process.on('exit', function() { mongoose.disconnect() }); // Shutdown Mongoose correctly
-app.set("view engine", "hbs");  // sets view engine to handlebars
+app.set("view engine", "ejs");  // sets view engine to handlebars
 app.use(bodyParser.json());  // allows for parameters in JSON and html
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(methodOverride('_method'));  // allows for put/delete request in html form
 app.use(express.static(__dirname + '/public'));  // looks for assets like stylesheets in a `public` folder
 var port = 3000;  // define a port to listen on
 
@@ -320,16 +322,16 @@ var remindersController = {
 module.exports = remindersController;
 ```
 
-We're rendering a handlebars view that doesn't exist yet. Lets create it now as well as our layout view.
+We're rendering a ejs view that doesn't exist yet. Lets create it now as well as our layout view.
 
 ```bash
 $ mkdir views
-$ touch views/layout.hbs
+$ touch views/layout.ejs
 $ mkdir views/reminders
-$ touch views/reminders/index.hbs
+$ touch views/reminders/index.ejs
 ```
 
-In `views/layout.hbs`:
+In `views/layout.ejs`:
 
 ```html
 <!doctype html>
@@ -344,21 +346,21 @@ In `views/layout.hbs`:
     </header>
     <hr>
     <!-- the below `triple-stash`, avoid handlebars escaping any html -->
-   {{{body}}}
+   <%- body %>
   </body>
 </html>
 ```
 
-In `views/reminders/index.hbs`:
+In `views/reminders/index.ejs`:
 
 ```html
 <ul>
-{{#each reminders}}
-  <li class="reminder">
-    <a class="reminder-title" href="/reminders/{{_id}}">{{title}}:</a>
-    <span class="reminder-body">{{body}}</span>
-  </li>
-{{/each}}
+  <% for(var i=0; i< reminders.length; i++) {%>
+    <li class="reminder">
+      <a class="reminder-title" href="/reminders/{{_id}}"><%= reminders[i].title %>:</a>
+      <span class="reminder-body"><%= reminders[i].body %></span>
+    </li>
+  <% } %>
 </ul>
 ```
 
@@ -372,7 +374,7 @@ app.get("/reminders/new", remindersController.new);
 app.post("/reminders", remindersController.create);
 ```
 
-Our views/reminders/new.hbs should look something like this:
+Our views/reminders/new.ejs should look something like this:
 
 ```html
 <h2>Create a New Reminder</h2>
